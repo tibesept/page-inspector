@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      target: development
+    volumes:
+      - ./prisma:/app/prisma
+      - ./src:/app/src
+    restart: "no"
+
+    environment:
+      NODE_ENV: dev

@@ -1,0 +1,13 @@
+dist
+build
+npm-debug.log
+
+node_modules
+
+.git
+.idea
+.vscode
+
+.env
+
+sessions

@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      target: production
+    restart: unless-stopped
+    
+    environment:
+      NODE_ENV: prod

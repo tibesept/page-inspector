@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: unless-stopped
+
+    # Аргументы для запуска Puppeteer в Docker
+    # --no-sandbox - обязателен при запуске от root, но является хорошей практикой и для non-root
+    # --disable-dev-shm-usage - предотвращает проблемы с нехваткой памяти в /dev/shm
+    command: ["node", "dist/index.js", "--no-sandbox", "--disable-dev-shm-usage"]
+    networks:
+      - page_analyzer_network
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep node || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  page_analyzer_network:
+    external: true

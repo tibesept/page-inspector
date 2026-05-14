@@ -1,0 +1,73 @@
+version: '3.8'
+
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - page_analyzer_network
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    env_file: .env
+    container_name: page-analyzer.adminer
+    image: adminer
+    restart: unless-stopped
+
+    ports:
+      - ${ADMINER_PORT}:8080
+    command: ["php", "-d", "upload_max_filesize=10G", "-d", "post_max_size=10G", "-S", "[::]:8080", "-t", "/var/www/html"]
+    networks:
+      - page_analyzer_network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBIT_PORT}:5672" # основной порт для AMQP
+      - "${RABBIT_WEB_PORT}:15672" # веб интерфейс
+    networks:
+      - page_analyzer_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running", "-q"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  api:
+    build: . 
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env 
+    ports:
+      - "${PORT}:3000"
+    networks:
+      - page_analyzer_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  page_analyzer_network:
+    external: true

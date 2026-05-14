@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      target: builder
+    command: npm run dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: "no"
+
+    environment:
+      - NODE_ENV=dev
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

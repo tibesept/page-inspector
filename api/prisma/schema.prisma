@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Берёт строку подключения из файла .env
+}
+
+// Модель пользователя
+model User {
+  userId  BigInt   @id @unique// ID из телеграма, не автоинкремент
+  balance Float @default(0)
+
+  jobs Job[] // Связь: один пользователь может иметь много задач
+}
+
+// Модель задачи (Job)
+model Job {
+  jobId   Int    @id @default(autoincrement()) // Уникальный ID задачи в нашей системе
+  status  String @default("pending") // Статус по умолчанию
+
+  // Поля, которые приходят при создании
+  url     String
+  type    Int
+  settings String @default("{}")
+
+  // Результат выполнения джобы
+  result  String @default("")
+  ai_summary String?
+
+  // Связь с пользователем
+  userId BigInt
+  user   User @relation(fields: [userId], references: [userId])
+}

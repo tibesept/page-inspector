@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: page-inspector-bot
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    networks:
+      - page_analyzer_network
+    volumes:
+      - session-data:/app/sessions
+
+networks:
+  page_analyzer_network:
+    external: true
+
+volumes:
+  session-data:
+    driver: local
