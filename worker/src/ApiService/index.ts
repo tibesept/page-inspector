@@ -1,7 +1,15 @@
 import { _apiHttpClient } from "../HttpClient/index.js";
 import { CreateJobDTO, JobProgressStatus, postJobSchemaDTO, UpdateJobBody } from "../types.js";
-import { z } from "zod";
 
+// Inline schema for z.any() and z.boolean() — avoids importing from "zod"
+// which resolves to v3 (from lighthouse) instead of v4 (from _shared).
+const anySchema = { safeParse: (data: unknown) => ({ success: true as const, data }) };
+const booleanSchema = {
+    safeParse: (data: unknown) => {
+        if (typeof data === "boolean") return { success: true as const, data };
+        return { success: false as const, error: { message: "Expected boolean" } };
+    }
+};
 
 type HttpClient = typeof _apiHttpClient;
 
@@ -21,11 +29,11 @@ class ApiService {
         status: JobProgressStatus,
     ): Promise<any> {
         // Облегченный запрос только для обновления статуса
-        return this.client.put(`/jobs/${id}/status`, { status }, z.any());
+        return this.client.put(`/jobs/${id}/status`, { status }, anySchema);
     }
 
-    public doJobExist(id: number): Promise<Boolean> {
-        return this.client.get(`/jobs/check/${id}`, z.boolean());
+    public doJobExist(id: number): Promise<boolean> {
+        return this.client.get(`/jobs/check/${id}`, booleanSchema);
     }
 }
 

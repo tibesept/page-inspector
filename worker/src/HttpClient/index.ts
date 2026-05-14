@@ -1,6 +1,26 @@
-import { z } from "zod";
 import { config } from "../config.js";
 import logger from "../logger.js";
+
+/**
+ * Minimal interface matching any Zod schema's .safeParse() method.
+ * Uses structural typing to avoid Zod version conflicts:
+ * lighthouse depends on Zod v3 (installed locally in worker/node_modules),
+ * while @page-inspector/shared uses Zod v4 (hoisted at root).
+ * By using a structural interface, schemas from either version work.
+ */
+interface ParseSuccess<T> {
+    success: true;
+    data: T;
+}
+
+interface ParseError {
+    success: false;
+    error: { message: string };
+}
+
+interface Parseable<T> {
+    safeParse(data: unknown): ParseSuccess<T> | ParseError;
+}
 
 /**
  * Отправка HTTP запросов к API
@@ -16,14 +36,14 @@ class ApiHttpClient {
         logger.debug("ApiHttpClient initialized");
     }
 
-    public get<T>(path: string, schema: z.ZodSchema<T>): Promise<T> {
+    public get<T>(path: string, schema: Parseable<T>): Promise<T> {
         return this.request(path, "GET", schema);
     }
 
     public post<T>(
         path: string,
         body: Record<string, unknown>,
-        schema: z.ZodSchema<T>,
+        schema: Parseable<T>,
     ): Promise<T> {
         return this.request(path, "POST", schema, body);
     }
@@ -31,7 +51,7 @@ class ApiHttpClient {
     public put<T>(
         path: string,
         body: Record<string, unknown>,
-        schema: z.ZodSchema<T>,
+        schema: Parseable<T>,
     ): Promise<T> {
         return this.request(path, "PUT", schema, body);
     }
@@ -39,7 +59,7 @@ class ApiHttpClient {
     private async request<T>(
         path: string,
         method: string,
-        schema: z.ZodSchema<T>,
+        schema: Parseable<T>,
         body?: Record<string, unknown>,
     ): Promise<T> {
         const url = `${this.baseUrl}${path}`;
@@ -52,10 +72,6 @@ class ApiHttpClient {
             body: body ? JSON.stringify(body) : undefined,
             signal: AbortSignal.timeout(4000), // таймаут
         };
-
-        // logger.debug(body,
-        //     `Doing ${method} request to URL: ${url}${body ? ' with body:' : ''}`
-        // );
 
         try {
             const response = await fetch(url, options);
