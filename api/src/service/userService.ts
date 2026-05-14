@@ -3,17 +3,18 @@ import { prisma } from "../db";
 
 export class UserService {
     static async getUserAndCreateIfNotExists(id: number) {
+        const bigIntId = BigInt(id);
         return await prisma.user.upsert({
-            where: { userId: id },
+            where: { userId: bigIntId },
             update: {}, // Если пользователь существует, ничего не обновляем
-            create: { userId: id }, // Если пользователя нет, создаём нового с этим userId
+            create: { userId: bigIntId }, // Если пользователя нет, создаём нового с этим userId
         });
     }
 
     // списание средств
     static async decrementBalance(id: number, amount: number) {
         return await prisma.user.update({
-            where: { userId: id },
+            where: { userId: BigInt(id) },
             data: {
                 balance: {
                     decrement: amount

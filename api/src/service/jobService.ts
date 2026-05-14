@@ -11,7 +11,7 @@ export class JobService {
             data: {
                 url,
                 type,
-                userId,
+                userId: BigInt(userId),
                 settings: JSON.stringify(settings)
             },
         });
