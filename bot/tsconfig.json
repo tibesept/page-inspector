@@ -1,15 +1,10 @@
 {
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "moduleResolution": "nodenext",
-    "target": "es2020",
     "module": "nodenext",
-    "lib": ["es2020"],
     "outDir": "./dist",
     "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
       "#api/*": ["./src/api/*"],
@@ -17,7 +12,7 @@
       "#core/*": ["./src/core/*"],
       "#repositories/*": ["./src/repositories/*"],
       "#services/*": ["./src/services/*"],
-      "#types/*": ["./src/types/*"],
+      "#types/*": ["./src/types/*"]
     }
   },
   "include": ["src/**/*"],

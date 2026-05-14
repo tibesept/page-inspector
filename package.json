@@ -2,9 +2,16 @@
   "name": "page-inspector-root",
   "private": true,
   "workspaces": [
+    "_shared",
     "api",
     "bot",
-    "worker",
-    "_shared"
-  ]
+    "worker"
+  ],
+  "scripts": {
+    "build:shared": "npm run build -w _shared",
+    "build:api": "npm run build:shared && npm run build -w api",
+    "build:bot": "npm run build:shared && npm run build -w bot",
+    "build:worker": "npm run build:shared && npm run build -w worker",
+    "build": "npm run build:shared && npm run build -w api & npm run build -w bot & npm run build -w worker"
+  }
 }
