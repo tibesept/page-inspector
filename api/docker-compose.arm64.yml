@@ -1,3 +1,0 @@
-services:
-  api:
-    platform: linux/amd64

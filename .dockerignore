@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.git
+**/.DS_Store
+**/.env
+**/npm-debug.log*
+**/*.tsbuildinfo
+
+# Keep .env-example files
+!**/.env-example

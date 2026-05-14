@@ -1,0 +1,34 @@
+# Root docker-compose override for Local Development
+# This file is automatically merged by Docker Compose when running `docker compose up` or `make up ENV=dev`.
+# It overrides the targets to 'development' and mounts local directories for hot-reloading.
+
+services:
+  api:
+    build:
+      target: development
+    volumes:
+      - ./api/src:/app/api/src
+      - ./api/prisma:/app/api/prisma
+    environment:
+      NODE_ENV: dev
+    restart: "no"
+
+  bot:
+    build:
+      target: development
+    volumes:
+      - ./bot/src:/app/bot/src
+    environment:
+      NODE_ENV: dev
+    restart: "no"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  worker:
+    build:
+      target: development
+    volumes:
+      - ./worker/src:/app/worker/src
+    environment:
+      NODE_ENV: dev
+    restart: "no"

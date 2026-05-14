@@ -1,78 +1,93 @@
+# Built with context=REPO ROOT so Docker can see _shared/ workspace.
+# Usage: docker build -f api/Dockerfile .  (from repo root)
+
 #-----------------------------------------
-# ЭТАП 1: BUILDER
-# Собирает production-ready артефакты
+# STAGE 1: BUILDER
 #-----------------------------------------
 FROM node:22.20.0-slim AS builder
 
-# Prisma для генерации своего движка требует системные библиотеки OpenSSL.
-# Без libssl-dev команда 'prisma generate' не работает
-# git добавляем на всякий случай, т.к. некоторые npm-пакеты могут подтягиваться напрямую из git-репозиториев.
-RUN apt-get update && apt-get install -y openssl libssl-dev git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openssl libssl-dev && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# зависимости
+# 1. Copy ALL workspace package.jsons + root lockfile for layer caching.
+#    npm ci validates the lockfile against every workspace — all must be present.
 COPY package.json package-lock.json ./
+COPY _shared/package.json ./_shared/
+COPY api/package.json ./api/
+COPY bot/package.json ./bot/
+COPY worker/package.json ./worker/
+
 RUN npm ci
 
-# prisma
-COPY prisma ./prisma
-RUN npx prisma generate
+# 2. Build _shared first (consumers depend on its dist/)
+COPY tsconfig.base.json ./
+COPY _shared/ ./_shared/
+RUN npm run build -w _shared
 
-# Копируем весь остальной код, включая entrypoint.sh
-COPY . .
-RUN npm run build
+# 3. Build API
+COPY api/tsconfig.json ./api/
+COPY api/prisma ./api/prisma
+RUN cd api && npx prisma generate
+
+COPY api/src ./api/src
+RUN npm run build -w api
 
 #-----------------------------------------
-# ЭТАП 2: PRODUCTION
-# Финальный, легковесный образ для прода
+# STAGE 2: PRODUCTION
 #-----------------------------------------
 FROM node:22.20.0-slim AS production
 
-# Скомпилированный на первом этапе движок Prisma для своей работы требует наличия
-# системной библиотеки libssl.so.3.
-# В отличие от первого этапа, здесь нам нужна только сама библиотека libssl3,
-# а не полный пакет для разработки (libssl-dev), поэтому она весит меньше.
-# Без этой команды приложение упадет с ошибкой "cannot open shared object file"
 RUN apt-get update && apt-get install -y libssl3 && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Копируем только необходимые для запуска артефакты из билдера
-COPY --from=builder /app/dist ./dist
+# Copy hoisted node_modules (includes @page-inspector/shared symlink)
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Copy shared package dist (symlink target)
+COPY --from=builder /app/_shared/dist ./_shared/dist
+COPY --from=builder /app/_shared/package.json ./_shared/
 
-# для production
-CMD ["npm", "run", "start"]
+# Copy API artifacts
+COPY --from=builder /app/api/dist ./api/dist
+COPY --from=builder /app/api/package.json ./api/
+COPY --from=builder /app/api/node_modules/.prisma ./api/node_modules/.prisma
+COPY --from=builder /app/api/prisma ./api/prisma
+COPY api/entrypoint.sh ./api/entrypoint.sh
+RUN chmod +x ./api/entrypoint.sh
+
+WORKDIR /app/api
+
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["node", "dist/index.js"]
 
 #-----------------------------------------
-# ЭТАП 3: DEVELOPMENT
-# Образ для разработки с hot-reload
+# STAGE 3: DEVELOPMENT
 #-----------------------------------------
 FROM node:22.20.0-slim AS development
 
-# В режиме разработки нам также нужны dev-библиотеки для Prisma,
-# если мы захотим перегенерировать клиент внутри контейнера.
-RUN apt-get update && apt-get install -y openssl libssl-dev git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openssl libssl-dev && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY _shared/package.json ./_shared/
+COPY api/package.json ./api/
+COPY bot/package.json ./bot/
+COPY worker/package.json ./worker/
+
 RUN npm install
 
-COPY prisma ./prisma
-RUN npx prisma generate
+COPY tsconfig.base.json ./
+COPY _shared/ ./_shared/
+RUN npm run build -w _shared
 
-COPY . .
-RUN chmod +x /app/entrypoint.sh
+COPY api/ ./api/
+RUN cd api && npx prisma generate
+RUN chmod +x ./api/entrypoint.sh
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+WORKDIR /app/api
 
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["npm", "run", "dev"]

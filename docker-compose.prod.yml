@@ -1,0 +1,30 @@
+# Root docker-compose override for Production Deployments
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Or via Makefile: make up ENV=prod
+
+services:
+  worker:
+    deploy:
+      replicas: 10
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    environment:
+      NODE_ENV: prod
+    restart: always
+
+  api:
+    environment:
+      NODE_ENV: prod
+    restart: always
+
+  bot:
+    environment:
+      NODE_ENV: prod
+    restart: always

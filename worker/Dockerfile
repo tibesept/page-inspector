@@ -1,90 +1,93 @@
+# Built with context=REPO ROOT so Docker can see _shared/ workspace.
+# Usage: docker build -f worker/Dockerfile .  (from repo root)
+
 #-----------------------------------------
-# ЭТАП 1: BASE
-# Создает общую основу с системными зависимостями
+# STAGE 1: BASE — System dependencies + Chrome
 #-----------------------------------------
 FROM node:22.20.0-slim AS base
 
-
-# Устанавливаем Google Chrome Stable вместо Chromium
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Утилиты, необходимые для добавления репозитория Chrome
     ca-certificates \
     curl \
     gnupg \
-    # Шрифты для корректного отображения
     fonts-noto \
     fonts-noto-color-emoji \
-    # dumb-init для корректной обработки сигналов
     dumb-init \
-    # Добавляем ключ и репозиторий Google Chrome
-    && curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    # Устанавливаем сам браузер
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
-    # Очищаем кэш
+    chromium \
     && rm -rf /var/lib/apt/lists/*
 
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# гооврим Puppeteer-core использовать нами установленный Chrome
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
-
-
-# Создаем специального НЕ рутированного юзера для запуска приложения.
 RUN groupadd -r nodeuser && useradd -r -g nodeuser -m -s /bin/bash nodeuser
 
-WORKDIR /home/nodeuser/app
-
-
-
 #-----------------------------------------
-# ЭТАП 2: DEPS
-# Зависимости
+# STAGE 2: DEPS — Install node_modules
 #-----------------------------------------
 FROM base AS deps
 
-COPY --chown=nodeuser:nodeuser package*.json ./
+WORKDIR /app
+
+COPY --chown=nodeuser:nodeuser package.json package-lock.json ./
+COPY --chown=nodeuser:nodeuser _shared/package.json ./_shared/
+COPY --chown=nodeuser:nodeuser api/package.json ./api/
+COPY --chown=nodeuser:nodeuser bot/package.json ./bot/
+COPY --chown=nodeuser:nodeuser worker/package.json ./worker/
+
 RUN npm ci
 
-
 #-----------------------------------------
-# ЭТАП 3: BUILDER
-# Собирает production-ready артефакты
+# STAGE 3: BUILDER — Compile TypeScript
 #-----------------------------------------
 FROM deps AS builder
 
-COPY --chown=nodeuser:nodeuser . .
-RUN npm run build
+# Build _shared first
+COPY --chown=nodeuser:nodeuser tsconfig.base.json ./
+COPY --chown=nodeuser:nodeuser _shared/ ./_shared/
+RUN npm run build -w _shared
+
+# Build worker
+COPY --chown=nodeuser:nodeuser worker/tsconfig.json ./worker/
+COPY --chown=nodeuser:nodeuser worker/src ./worker/src
+RUN npm run build -w worker
 RUN npm prune --production
 
-
 #-----------------------------------------
-# ЭТАП 4: PRODUCTION
-# Финальный, легковесный образ для прода
+# STAGE 4: PRODUCTION
 #-----------------------------------------
 FROM base AS final
 
-WORKDIR /home/nodeuser/app
+WORKDIR /app
 USER nodeuser
 
-# Копируем только скомпилированный код и production-зависимости
-COPY --chown=nodeuser:nodeuser --from=builder /home/nodeuser/app/dist ./dist
-COPY --chown=nodeuser:nodeuser --from=builder /home/nodeuser/app/node_modules ./node_modules
-COPY --chown=nodeuser:nodeuser --from=builder /home/nodeuser/app/package.json ./
+# Copy hoisted node_modules (includes @page-inspector/shared symlink)
+COPY --chown=nodeuser:nodeuser --from=builder /app/node_modules ./node_modules
 
-# dumb-init будет корректно обрабатывать сигналы (например, SIGTERM от Docker)
+# Copy shared package dist (symlink target)
+COPY --chown=nodeuser:nodeuser --from=builder /app/_shared/dist ./_shared/dist
+COPY --chown=nodeuser:nodeuser --from=builder /app/_shared/package.json ./_shared/
+
+# Copy worker artifacts
+COPY --chown=nodeuser:nodeuser --from=builder /app/worker/dist ./worker/dist
+COPY --chown=nodeuser:nodeuser --from=builder /app/worker/package.json ./worker/
+
+WORKDIR /app/worker
+
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-
-CMD [ "node", "dist/index.js" ]
-
+CMD ["node", "dist/index.js"]
 
 #-----------------------------------------
-# ЭТАП 5: DEVELOPMENT
-# Образ для разработки с hot-reload
+# STAGE 5: DEVELOPMENT
 #-----------------------------------------
 FROM deps AS development
 
 USER nodeuser
-COPY --chown=nodeuser:nodeuser . .
 
-CMD [ "npm", "run", "dev" ]
+COPY --chown=nodeuser:nodeuser tsconfig.base.json ./
+COPY --chown=nodeuser:nodeuser _shared/ ./_shared/
+RUN npm run build -w _shared
+
+COPY --chown=nodeuser:nodeuser worker/ ./worker/
+
+WORKDIR /app/worker
+
+CMD ["npm", "run", "dev"]
