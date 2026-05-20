@@ -1,4 +1,4 @@
-import { Composer } from "grammy";
+import { Composer, InlineKeyboard } from "grammy";
 import { TMyContext } from "#types/state.js";
 import { EConversations } from "#bot/handlers/conversations/index.js";
 
@@ -29,8 +29,16 @@ basicCommands.command("me", async (ctx) => {
 
     await ctx.reply(
         `👤 <b>Ваш профиль</b>\n\nID: <code>${ctx.from.id}</code>\nБаланс: <b>${data.balance} кредитов</b>`,
-        { parse_mode: "HTML" }
+        {
+            parse_mode: "HTML",
+            reply_markup: new InlineKeyboard().text("💳 Пополнить баланс", "buy_credits")
+        }
     );
+});
+
+basicCommands.callbackQuery("buy_credits", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.conversation.enter(EConversations.buyCredits);
 });
 
 basicCommands.on("message:entities:url", async (ctx) => {

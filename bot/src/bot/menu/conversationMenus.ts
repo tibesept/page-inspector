@@ -178,3 +178,16 @@ export function createMainMenu(
     })
     return main;
 }
+
+// ----- BUY CREDITS MENU -----
+export function createBuyCreditsMenu(
+    conversation: Conversation<Context, TMyContext>
+) {
+    const menu = conversation.menu("buy-credits-menu")
+        .text("❌ Отмена", async (ctx) => {
+            await ctx.deleteMessage();
+            await ctx.reply("Операция отменена!");
+            conversation.halt();
+        });
+    return menu;
+}
