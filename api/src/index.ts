@@ -20,6 +20,10 @@ const pino = pinoHttp({ logger });
 app.use(express.json());
 app.use(pino);
 
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 // ROUTER
 app.use('/api', router);
 
