@@ -12,7 +12,7 @@ import { errorHandler } from "#bot/handlers/error/index.js";
 // commands
 import { basicCommands } from "#bot/handlers/commands/basicCommands.js";
 // conversations
-import { newJob } from "#bot/handlers/conversations/index.js";
+import { newJob, buyCredits } from "#bot/handlers/conversations/index.js";
 
 // ===== API ===== (используем только как типы)
 // repositories
@@ -52,6 +52,7 @@ export function configureBot(
     // CONVERSATIONS
     bot.use(conversations());
     bot.use(createConversation(newJob, { plugins: [injectServices]}));
+    bot.use(createConversation(buyCredits, { plugins: [injectServices]}));
 
     // HANDLERS
     bot.use(basicCommands);
