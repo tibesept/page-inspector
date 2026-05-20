@@ -176,3 +176,5 @@ export type CreateJobDTO = z.infer<typeof postJobSchemaDTO>;
 export type JobTask = z.infer<typeof jobTaskSchema>;
 export type JobAnalyzerSettingsDB = z.infer<typeof jobAnalyzerSettings>;
 export type JobReadySummary = z.infer<typeof jobReadySummary>;
+
+export const LIGHTHOUSE_PRO_COST = 10;

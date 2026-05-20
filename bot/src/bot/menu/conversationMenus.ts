@@ -5,6 +5,7 @@ import { Context } from "grammy";
 import { getSettingsText, settingToggles } from "./helpers.js";
 import Emoji from "#bot/emoji.js";
 import { logger } from "#core/logger.js";
+import { LIGHTHOUSE_PRO_COST } from "@page-inspector/shared";
 
 // ----- PRE JOB SETTINGS ---- 
 export function createSettingsMenu(
@@ -13,37 +14,39 @@ export function createSettingsMenu(
     parent: ConversationMenu<TMyContext>
 ) {
     return conversation
-        .menu("settings-menu", { parent: parent })
+        .menu("settings-menu", { parent: parent, autoAnswer: false })
         .dynamic((ctx, range) => {
             settingToggles.forEach((toggle) => { // создаем чекбоксы (toggles)
                 range.text(
                     () => `${toggle.label}: ${settingsBuffer[toggle.key] ? Emoji.yes : Emoji.no}`, // текст чекбокса
                     async (ctx) => { // логика нажатия на чекбокс
-                        // Проверка баланса для платных фич
                         if (!settingsBuffer[toggle.key]) {
                             if (toggle.key === "lighthouse_pro") {
-                                // Выполняем внешний запрос
-                                const user = await conversation.external(() => ctx.userService.getUserById(ctx.from!.id));
-                                
-                                // FIXME: хардкод стоимости платной фичи (10 кредитов)
-                                const REQUIRED_BALANCE = 10;
-                                
-                                if (!user || user.balance < REQUIRED_BALANCE) {
-                                    await ctx.answerCallbackQuery({
-                                        text: `❌ Недостаточно кредитов!\n\nТребуется: ${REQUIRED_BALANCE}\nУ вас: ${user?.balance || 0}`,
-                                        show_alert: true
-                                    });
+                                // get user (кешируется во время реплеев диалога)
+                                const user = await conversation.external(() =>
+                                    ctx.userService.getUserById(ctx.from!.id)
+                                );
+
+                                if (!user || user.balance < LIGHTHOUSE_PRO_COST) {
+                                    try {
+                                        await ctx.answerCallbackQuery({
+                                            text: `❌ Недостаточно кредитов!\n\nТребуется: ${LIGHTHOUSE_PRO_COST}\nУ вас: ${user?.balance || 0}`,
+                                            show_alert: true
+                                        });
+                                    } catch (e) {
+                                        logger.error(e, "Не успели показать алерт из-за долгого ответа API");
+                                    }
                                     return; // Прерываем включение чекбокса
                                 }
                             }
                         }
 
                         // если настройка включается и у нее есть зависимая настройка, то включаем зависимую. 
-                        if(toggle.parent && !settingsBuffer[toggle.key]) { 
+                        if (toggle.parent && !settingsBuffer[toggle.key]) {
                             settingsBuffer[toggle.parent] = true;
                         }
                         // если настройка выключается и у нее есть опциональная поднастройка, то ее тоже выключаем 
-                        if(toggle.child && settingsBuffer[toggle.key]) {
+                        if (toggle.child && settingsBuffer[toggle.key]) {
                             settingsBuffer[toggle.child] = false;
                         }
 
@@ -80,13 +83,13 @@ export function createMainMenu(
     settingsBuffer: IAnalyzerSettings
 ) {
     const main = conversation.menu("root-menu")
-        .text("Запуск!", async (ctx) => { 
+        .text("Запуск!", async (ctx) => {
             await ctx.deleteMessage();
             const progressMsg = await ctx.reply("⏳ <b>Ожидайте...</b>", { parse_mode: "HTML" });
 
             const job = await conversation.external((ctx: TMyContext) => {
                 if (!ctx.from?.id) throw new Error("No ctx.from.id");
-                
+
                 return ctx.jobService.createNewJob({
                     userId: ctx.from.id,
                     url: url,
@@ -130,7 +133,7 @@ export function createMainMenu(
 
                             if (currentJob.status !== lastStatus) {
                                 lastStatus = currentJob.status;
-                                
+
                                 let text = `🔄 <b>Статус: ${currentJob.status}</b>`;
                                 const parsedStatus = jobProgressStatusSchema.safeParse(currentJob.status);
                                 if (parsedStatus.success) {
@@ -166,7 +169,7 @@ export function createMainMenu(
         });
 
     const settings = createSettingsMenu(conversation, settingsBuffer, main);
-    
+
     main.submenu("Настройки", settings);
     main.row().text("Отмена", async (ctx) => {
         await ctx.deleteMessage();

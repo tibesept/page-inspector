@@ -2,6 +2,7 @@ import { Conversation } from "@grammyjs/conversations";
 import { logger } from "#core/logger.js";
 import { TMyContext } from "#types/state.js";
 import { Context } from "grammy";
+import { LIGHTHOUSE_PRO_COST } from "@page-inspector/shared";
 import {
     createMainMenu,
 } from "#bot/menu/conversationMenus.js";
@@ -33,9 +34,6 @@ export async function newJob(
     // Проверяем баланс и сбрасываем платные фичи если средств не хватает.
     // Делаем это на входе, чтобы меню сразу отражало корректное состояние.
     const user = await conversation.external((ctx: TMyContext) => ctx.userService.getUserById(ctx.from!.id));
-
-    // FIXME: хардкод стоимости платной фичи lighthouse_pro (10 кредитов)
-    const LIGHTHOUSE_PRO_COST = 10;
 
     if (settingsBuffer.lighthouse_pro && (!user || user.balance < LIGHTHOUSE_PRO_COST)) {
         settingsBuffer.lighthouse_pro = false;
