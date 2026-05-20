@@ -7,6 +7,7 @@ import {
     jobWorkerResultSchema,
     updateJobBodySchema,
     updateJobStatusBodySchema,
+    LIGHTHOUSE_PRO_COST,
 } from "../../types";
 import { JobService } from "../../service/jobService";
 import { BadRequestError } from "../../errors/badRequest";
@@ -52,7 +53,7 @@ router.put("/:id", async (req: Request, res: Response<CreateJobDTO>) => {
     
     // проверка премиума
     const user = await UserService.getUserAndCreateIfNotExists(Number(existingJob.userId));
-    const PREMIUM_PRICE = 10;
+    const PREMIUM_PRICE = LIGHTHOUSE_PRO_COST;
     let isPremiumReport = false;
     let processedResultString = result;
 
