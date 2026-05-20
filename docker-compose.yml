@@ -41,8 +41,8 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_running", "-q"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   api:
@@ -55,6 +55,11 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const http = require('http'); http.get('http://localhost:3000/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     env_file:
       - ./api/.env
     ports:
@@ -66,6 +71,9 @@ services:
       context: .
       dockerfile: bot/Dockerfile
       target: production
+    depends_on:
+      worker:
+        condition: service_healthy
     env_file:
       - ./bot/.env
     restart: unless-stopped
@@ -77,13 +85,16 @@ services:
       context: .
       dockerfile: worker/Dockerfile
       target: final
+    depends_on:
+      api:
+        condition: service_healthy
     env_file:
       - ./worker/.env
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pgrep node || exit 1"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 3
 
 volumes:
