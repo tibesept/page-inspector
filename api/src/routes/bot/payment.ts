@@ -2,7 +2,8 @@ import { Router, Request, Response } from "express";
 import { 
     createPaymentIntentBodySchema, 
     confirmPaymentBodySchema, 
-    PaymentIntentDTO 
+    PaymentIntentDTO,
+    TELEGRAM_STARS_RATE
 } from "../../types";
 import { PaymentService } from "../../service/paymentService";
 import { BadRequestError } from "../../errors/badRequest";
@@ -13,6 +14,13 @@ const router = Router();
 // Создание намерения платежа
 router.post("/", async (req: Request, res: Response<PaymentIntentDTO>) => {
     const body = createPaymentIntentBodySchema.parse(req.body);
+    
+    // Валидируем курс конвертации на сервере для безопасности платежной системы
+    if (body.amountStars !== body.amountCredits * TELEGRAM_STARS_RATE) {
+        throw new BadRequestError(
+            `Неверный курс обмена. Ожидалось ${body.amountCredits * TELEGRAM_STARS_RATE} Stars для ${body.amountCredits} кредитов.`
+        );
+    }
     
     logger.info({ userId: body.userId, credits: body.amountCredits }, "Creating payment intent");
     
