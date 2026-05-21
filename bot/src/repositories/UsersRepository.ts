@@ -5,6 +5,8 @@ import { logger } from "#core/logger.js";
 
 export interface IUsersRepository {
     getUserById(id: number): Promise<User | null>; 
+    createPaymentIntent(userId: number, amountCredits: number, amountStars: number): Promise<{ id: string }>;
+    confirmPayment(paymentId: string, telegramChargeId: string): Promise<{ success: boolean; alreadyProcessed: boolean }>;
 }
 
 export class UsersRepository implements IUsersRepository {
@@ -17,6 +19,21 @@ export class UsersRepository implements IUsersRepository {
         }
 
         return this.mapGetDtoToModel(dto);
+    }
+
+    public async createPaymentIntent(userId: number, amountCredits: number, amountStars: number) {
+        return await this.apiService.createPaymentIntent({
+            userId,
+            amountCredits,
+            amountStars
+        });
+    }
+
+    public async confirmPayment(paymentId: string, telegramChargeId: string) {
+        return await this.apiService.confirmPayment({
+            paymentId,
+            telegramChargeId
+        });
     }
 
 

@@ -70,7 +70,29 @@ export async function buyCredits(
     await ctx.reply(
         `💸 Вы выбрали пополнение на <b>${credits} кредитов</b>.\n` +
         `Стоимость: <b>${stars} Telegram Stars (⭐)</b>.\n\n` +
-        `<i>(На данный момент функция оплаты находится в разработке и скоро будет доступна!)</i>`,
+        `⏳ <i>Создаем инвойс для оплаты...</i>`,
         { parse_mode: "HTML" }
     );
+
+    try {
+        if (!ctx.from?.id || !ctx.chat?.id) {
+            throw new Error("Missing ctx.from.id or ctx.chat.id");
+        }
+
+        const paymentIntent = await conversation.external(() =>
+            ctx.userService.createPaymentIntent(ctx.from!.id, credits!, stars)
+        );
+
+        await ctx.api.sendInvoice(
+            ctx.chat.id,
+            `Пополнение баланса (+${credits} кр.)`,
+            `Покупка ${credits} кредитов для PageInspector`,
+            paymentIntent.id,
+            "XTR",
+            [{ label: "Telegram Stars", amount: stars }]
+        );
+    } catch (err) {
+        logger.error(err, "Failed to create payment intent or send invoice");
+        await ctx.reply("❌ Не удалось создать инвойс для оплаты. Пожалуйста, попробуйте позже.");
+    }
 }
