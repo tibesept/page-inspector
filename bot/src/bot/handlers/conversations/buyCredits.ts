@@ -3,6 +3,7 @@ import { logger } from "#core/logger.js";
 import { TMyContext } from "#types/state.js";
 import { Context } from "grammy";
 import { createBuyCreditsMenu } from "#bot/menu/conversationMenus.js";
+import { TELEGRAM_STARS_RATE } from "@page-inspector/shared";
 
 export async function buyCredits(
     conversation: Conversation<Context, TMyContext>,
@@ -13,7 +14,7 @@ export async function buyCredits(
     const promptMessage = await ctx.reply(
         `💳 <b>Пополнение баланса</b>\n\n` +
         `Пожалуйста, введите количество кредитов, которое вы хотите приобрести.\n` +
-        `Курс: <b>3 Telegram Stars (⭐) = 1 кредит</b>.\n\n` +
+        `Курс: <b>${TELEGRAM_STARS_RATE} Telegram Stars (⭐) = 1 кредит</b>.\n\n` +
         `<i>Отправьте числом, сколько кредитов вам нужно (например: <code>10</code>).</i>`,
         {
             reply_markup: menu,
@@ -65,7 +66,7 @@ export async function buyCredits(
         // Игнорируем ошибки удаления
     }
 
-    const stars = credits * 3;
+    const stars = credits * TELEGRAM_STARS_RATE;
 
     await ctx.reply(
         `💸 Вы выбрали пополнение на <b>${credits} кредитов</b>.\n` +
