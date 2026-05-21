@@ -57,7 +57,8 @@ router.put("/:id", async (req: Request, res: Response<CreateJobDTO>) => {
     let isPremiumReport = false;
     let processedResultString = result;
 
-    if (settings.lighthouse_pro && user.balance >= PREMIUM_PRICE) {
+    const balanceNum = typeof user.balance === "number" ? user.balance : Number(user.balance);
+    if (settings.lighthouse_pro && balanceNum >= PREMIUM_PRICE) {
         isPremiumReport = true;
     }
 

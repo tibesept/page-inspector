@@ -14,9 +14,28 @@ datasource db {
 // Модель пользователя
 model User {
   userId  BigInt   @id @unique// ID из телеграма, не автоинкремент
-  balance Float @default(0)
+  balance Decimal  @default(0) @db.Decimal(10, 2)
 
   jobs Job[] // Связь: один пользователь может иметь много задач
+  payments Payment[]
+}
+
+model Payment {
+  id               String   @id @default(uuid()) // Это наш uniqueId (payload)
+  userId           BigInt
+  user             User     @relation(fields: [userId], references: [userId])
+
+  // Здесь тоже ставим Decimal, чтобы типы совпадали при начислении
+  amountCredits    Decimal  @db.Decimal(10, 2) 
+  amountStars      Int
+  status           String   @default("WAITING") // "WAITING", "DONE", "FAILED"
+  telegramChargeId String?  @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Добавим индекс, чтобы база мгновенно находила историю платежей юзера
+  @@index([userId]) 
+  @@index([telegramChargeId])
 }
 
 // Модель задачи (Job)
