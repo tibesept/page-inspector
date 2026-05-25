@@ -1,6 +1,7 @@
 import { Composer, InlineKeyboard } from "grammy";
 import { TMyContext } from "#types/state.js";
 import { EConversations } from "#bot/handlers/conversations/index.js";
+import { logger } from "#core/logger.js";
 
 export const basicCommands = new Composer<TMyContext>();
 
@@ -42,15 +43,57 @@ basicCommands.callbackQuery("buy_credits", async (ctx) => {
 });
 
 basicCommands.on("message:entities:url", async (ctx) => {
+    if (!ctx.from?.id) return;
     const text = ctx.message.text;
     const urls = ctx.msg.entities
         ?.filter(entity => entity.type === "url")
         .map(entity => text.substring(entity.offset, entity.offset + entity.length));
 
-    if (!urls[0]?.toLowerCase()?.startsWith("http")) {
+    const url = urls[0];
+    if (!url) return;
+
+    if (!url.toLowerCase().startsWith("http")) {
         await ctx.reply("Ссылка должна начинаться с протокола http или https.")
         return;
     }
 
-    await ctx.conversation.enter(EConversations.newJob, urls[0]);
-})
+    // Сохраняем URL в сессию для последующего быстрого оформления
+    ctx.session.currentUrl = url;
+
+    try {
+        const cart = await ctx.userService.getCart(ctx.from.id);
+        const keyboard = new InlineKeyboard();
+
+        if (cart.items && cart.items.length > 0) {
+            // В корзине уже есть товары! Предлагаем запустить анализ с текущей корзиной.
+            let msgText = `🔗 <b>Обнаружена ссылка:</b> <code>${url}</code>\n\n` +
+                          `В вашей корзине сейчас находится услуг: <b>${cart.items.length}</b>\n` +
+                          `Итоговая стоимость: <b>${cart.totalCost} 💎</b>\n\n` +
+                          `Хотите запустить анализ этого сайта с выбранными услугами?`;
+
+            keyboard.text("🚀 Запустить и оплатить", "cart_checkout").row()
+                    .text("🛒 Открыть корзину", "cart_view")
+                    .text("📂 Изменить услуги", "cart_catalog");
+
+            await ctx.reply(msgText, {
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        } else {
+            // Корзина пуста. Предлагаем запустить базовый SEO-анализ за 1.00 💎 или открыть каталог.
+            let msgText = `🔗 <b>Обнаружена ссылка:</b> <code>${url}</code>\n\n` +
+                          `Ваша корзина пуста. Вы можете быстро запустить базовый SEO-анализ всего за <b>1.00 💎</b> или открыть каталог услуг для детального аудита.`;
+
+            keyboard.text("➕ Добавить базовый SEO (1 💎) и запустить", "cart_quick_add:SEO_BASIC").row()
+                    .text("📂 Открыть каталог услуг", "cart_catalog");
+
+            await ctx.reply(msgText, {
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+    } catch (err) {
+        logger.error(err, "Error inside message:entities:url handler");
+        await ctx.reply("❌ Произошла ошибка при обработке ссылки.");
+    }
+});
