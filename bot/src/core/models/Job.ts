@@ -1,5 +1,5 @@
 import { JobWorkerResultDTO, JobProgressStatus } from "#api/types.js"; // Мы можем переиспользовать тип результата
-import { IAnalyzerSettings } from "#types/state.js";
+import { JobAnalyzerSettingsDB } from "#api/types.js";
 
 export type JobStatus = JobProgressStatus | "created";
 
@@ -19,7 +19,7 @@ export interface Job {
      * Может быть null, если задача еще не выполнена.
      */
     result: JobWorkerResultDTO | null;
-    settings: IAnalyzerSettings | null;
+    settings: JobAnalyzerSettingsDB | null;
 }
 
 export interface Ready {

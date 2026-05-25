@@ -1,21 +1,9 @@
 import { Context } from "grammy";
-import { ELanguages, IAnalyzerSettings, ISessionData } from "#types/state.js";
-
-export const defaultAnalyzerSettings: IAnalyzerSettings = {
-    links: false,
-    seo: true,
-    lighthouse: false,
-    lighthouse_pro: false,
-    techstack: false,
-    ai_summary: false
-};
-
+import { ELanguages, ISessionData } from "#types/state.js";
 export function initial(): ISessionData {
     return {
         language: ELanguages.en,
         currentUrl: null,
-        analyzerSettingsBuffer: defaultAnalyzerSettings,
-        analyzerSettings: defaultAnalyzerSettings
     };
 }
 
