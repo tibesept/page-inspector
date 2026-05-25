@@ -36,6 +36,14 @@ export class ApiHttpClient {
         return this.request(path, "PUT", schema, body);
     }
 
+    public patch<T>(
+        path: string,
+        body: Record<string, unknown>,
+        schema: z.ZodSchema<T>,
+    ): Promise<T> {
+        return this.request(path, "PATCH", schema, body);
+    }
+
     public delete<T>(path: string, schema: z.ZodSchema<T>): Promise<T> {
         return this.request(path, "DELETE", schema);
     }

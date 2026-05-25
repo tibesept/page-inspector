@@ -88,4 +88,30 @@ export class ApiService {
     public checkoutCart(userId: number | bigint, url: string): Promise<CheckoutResponseDTO> {
         return this.client.post(`/cart/${userId}/checkout`, { url }, checkoutResponseSchemaDTO);
     }
+
+    // MONITORS
+    public getMonitors(userId: number | bigint): Promise<any[]> {
+        return this.client.get(`/monitors/${userId}`, z.array(z.any()));
+    }
+
+    public createMonitor(userId: number | bigint, data: any): Promise<any> {
+        return this.client.post(`/monitors/${userId}`, data, z.any());
+    }
+
+    public toggleMonitor(userId: number | bigint, id: number, active: boolean): Promise<any> {
+        return this.client.patch(`/monitors/${userId}/${id}`, { active }, z.any());
+    }
+
+    public deleteMonitor(userId: number | bigint, id: number): Promise<any> {
+        return this.client.delete(`/monitors/${userId}/${id}`, z.any());
+    }
+
+    // NOTIFICATIONS
+    public getUnsentNotifications(): Promise<any[]> {
+        return this.client.get(`/notifications/unsent`, z.array(z.any()));
+    }
+
+    public markNotificationSent(id: number): Promise<any> {
+        return this.client.patch(`/notifications/${id}/sent`, {}, z.any());
+    }
 }

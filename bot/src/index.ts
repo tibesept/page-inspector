@@ -16,6 +16,8 @@ import { Bot } from 'grammy';
 import { TMyContext } from '#types/state.js';
 import { UsersRepository } from '#repositories/UsersRepository.js';
 import { UserService } from '#services/UserService.js';
+import { MonitorService } from '#services/MonitorService.js';
+import { NotificationService } from '#services/NotificationService.js';
 
 const bootstrap = async () => {
     logger.info("Starting application bootstrap...");
@@ -35,10 +37,18 @@ const bootstrap = async () => {
     const usersRepository = new UsersRepository(apiService);
     const userService = new UserService(usersRepository);
 
-    configureBot(bot, usersRepository, userService, jobService);
+    // monitors
+    const monitorService = new MonitorService(apiService);
+
+    // notifications
+    const notificationService = new NotificationService(bot, apiService, 30000); // 30 seconds
+
+    configureBot(bot, usersRepository, userService, jobService, monitorService);
 
     const app = new App(bot, jobService);
 
+    notificationService.startPolling();
+    
     await app.start();
 };
 

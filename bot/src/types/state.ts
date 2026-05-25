@@ -1,5 +1,6 @@
 import { JobService } from "#services/JobService.js";
 import { UserService } from "#services/UserService.js";
+import { MonitorService } from "#services/MonitorService.js";
 import { Conversation, ConversationFlavor } from "@grammyjs/conversations";
 import { Context, SessionFlavor } from "grammy";
 
@@ -18,5 +19,6 @@ export type TMyContext = ConversationFlavor<
 > & {
     jobService: JobService;
     userService: UserService;
+    monitorService: MonitorService;
 }
 export type TMyConversation = Conversation<TMyContext>;
