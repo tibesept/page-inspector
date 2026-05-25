@@ -8,18 +8,8 @@ export enum ELanguages {
     en = "EN",
 }
 
-export interface IAnalyzerSettings {
-    links: boolean;
-    seo: boolean;
-    lighthouse: boolean;
-    techstack: boolean;
-    ai_summary: boolean;
-    lighthouse_pro: boolean;
-}
 export interface ISessionData {
     language: ELanguages;
-    analyzerSettings: IAnalyzerSettings;
-    analyzerSettingsBuffer: IAnalyzerSettings;
     currentUrl: string | null;
 }
 

@@ -18,6 +18,7 @@ model User {
 
   jobs Job[] // Связь: один пользователь может иметь много задач
   payments Payment[]
+  cartItems CartItem[]
 }
 
 model Payment {
@@ -55,4 +56,14 @@ model Job {
   // Связь с пользователем
   userId BigInt
   user   User @relation(fields: [userId], references: [userId])
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    BigInt
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  productId String   // Stores ProductId as string (e.g. "SEO_MAX", "AI_SUMMARY")
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

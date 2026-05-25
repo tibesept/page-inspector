@@ -11,8 +11,9 @@ import { ISessionData, TMyContext } from "#types/state.js";
 import { errorHandler } from "#bot/handlers/error/index.js";
 // commands
 import { basicCommands } from "#bot/handlers/commands/basicCommands.js";
+import { cartCommands } from "#bot/handlers/commands/cartCommands.js";
 // conversations
-import { newJob, buyCredits } from "#bot/handlers/conversations/index.js";
+import { buyCredits, checkoutCart } from "#bot/handlers/conversations/index.js";
 
 // ===== API ===== (используем только как типы)
 // repositories
@@ -51,8 +52,8 @@ export function configureBot(
 
     // CONVERSATIONS
     bot.use(conversations());
-    bot.use(createConversation(newJob, { plugins: [injectServices]}));
     bot.use(createConversation(buyCredits, { plugins: [injectServices]}));
+    bot.use(createConversation(checkoutCart, { plugins: [injectServices]}));
 
     // PRE_CHECKOUT_QUERY HANDLER
     bot.on("pre_checkout_query", async (ctx) => {
@@ -128,6 +129,7 @@ export function configureBot(
 
     // HANDLERS
     bot.use(basicCommands);
+    bot.use(cartCommands);
 
     // ERROR HANDLER
     bot.catch(errorHandler);

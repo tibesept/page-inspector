@@ -42,8 +42,8 @@ endif
 up: ## Start services (ENV=dev|prod, srv=<name> to target one)
 	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) up --build -d $(srv)
 
-down: ## Stop & remove containers, networks, and volumes
-	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) down -v
+down: ## Stop & remove containers and networks (persists volumes)
+	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) down
 
 stop: ## Stop containers without removing them
 	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) stop $(srv)
@@ -67,6 +67,18 @@ clean: down ## Full cleanup: remove containers, images, orphans
 	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) down --rmi all --remove-orphans -v
 
 # --- Local TypeScript ---
+
+# --- Database / Prisma ---
+
+db-migrate: ## Generate and apply a new migration (usage: make db-migrate name=add_cart)
+	@if [ -z "$(name)" ]; then echo "Error: Please specify migration name, e.g. make db-migrate name=add_some_feature"; exit 1; fi
+	docker compose exec api npx prisma migrate dev --name $(name)
+
+db-deploy: ## Apply pending migrations using deploy command
+	docker compose exec api npx prisma migrate deploy
+
+db-reset: ## Reset the local development database and apply all migrations (destructive)
+	docker compose exec api npx prisma migrate reset --force
 
 ts: ## Compile all TypeScript locally (no Docker)
 	npm run build

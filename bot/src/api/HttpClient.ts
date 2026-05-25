@@ -36,6 +36,10 @@ export class ApiHttpClient {
         return this.request(path, "PUT", schema, body);
     }
 
+    public delete<T>(path: string, schema: z.ZodSchema<T>): Promise<T> {
+        return this.request(path, "DELETE", schema);
+    }
+
     private async request<T>(
         path: string,
         method: string,

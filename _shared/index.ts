@@ -9,7 +9,14 @@ export const jobAnalyzerSettings = z.object({
     lighthouse_pro: z.boolean(),
     techstack: z.boolean(),
     ai_summary: z.boolean()
+}).refine(data => {
+    if (data.links && !data.seo) return false;
+    if (data.lighthouse_pro && !data.lighthouse) return false;
+    return true;
+}, {
+    message: "SEO_MAX (links) requires SEO_BASIC (seo) to be active, and LIGHTHOUSE_MAX (lighthouse_pro) requires LIGHTHOUSE_BASIC (lighthouse) to be active."
 });
+
 
 // BODY VALIDATION
 export const createJobBodySchema = z.object({
@@ -203,3 +210,56 @@ export const paymentIntentSchemaDTO = z.object({
 export type CreatePaymentIntentBody = z.infer<typeof createPaymentIntentBodySchema>;
 export type ConfirmPaymentBody = z.infer<typeof confirmPaymentBodySchema>;
 export type PaymentIntentDTO = z.infer<typeof paymentIntentSchemaDTO>;
+
+// --- SERVICE CATALOG & SHOPPING CART ---
+export type ProductId = 'SEO_BASIC' | 'SEO_MAX' | 'LIGHTHOUSE_BASIC' | 'LIGHTHOUSE_MAX' | 'AI_SUMMARY';
+
+export interface ProductDetails {
+  name: string;
+  priceCredits: number;
+  flags: Partial<{
+    seo: boolean;
+    links: boolean;
+    lighthouse: boolean;
+    lighthouse_pro: boolean;
+    techstack: boolean;
+    ai_summary: boolean;
+  }>;
+}
+
+export const PRODUCT_DEPENDENCIES: Record<ProductId, ProductId | null> = {
+  SEO_BASIC: null,
+  SEO_MAX: 'SEO_BASIC',
+  LIGHTHOUSE_BASIC: null,
+  LIGHTHOUSE_MAX: 'LIGHTHOUSE_BASIC',
+  AI_SUMMARY: null
+};
+
+export const SERVICES_CATALOG: Record<ProductId, ProductDetails> = {
+  SEO_BASIC: {
+    name: "Базовый SEO-анализ",
+    priceCredits: 1.00,
+    flags: { seo: true }
+  },
+  SEO_MAX: {
+    name: "Продвинутый SEO-анализ (включая битые ссылки)",
+    priceCredits: 5.00,
+    flags: { seo: true, links: true }
+  },
+  LIGHTHOUSE_BASIC: {
+    name: "Базовый Lighthouse-аудит",
+    priceCredits: 2.00,
+    flags: { lighthouse: true }
+  },
+  LIGHTHOUSE_MAX: {
+    name: "Максимальный Lighthouse-аудит (включая PRO инсайты)",
+    priceCredits: 12.00,
+    flags: { lighthouse: true, lighthouse_pro: true }
+  },
+  AI_SUMMARY: {
+    name: "Резюме от ИИ",
+    priceCredits: 5.00,
+    flags: { ai_summary: true }
+  }
+};
+
