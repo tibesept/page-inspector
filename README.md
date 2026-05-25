@@ -4,11 +4,6 @@
 
 Веб-мастерам и SEO-специалистам часто требуется быстро проверить базовые технические параметры сайта: доступность robots.txt, наличие битых ссылок, скорость загрузки. Существующие инструменты либо платные, либо требуют открытия десктоп-приложений. Мой бот решает эту проблему, предоставляя ключевую аналитику по запросу прямо в Telegram, что экономит время и позволяет проводить мониторинг с любого устройства.
 
-## Сами репозитории:
-* [Telegram-бот](https://github.com/tibesept/page-inspector-bot)
-* [REST API](https://github.com/tibesept/page-inspector-api)
-* [Worker](https://github.com/tibesept/page-inspector-worker)
-
 ---
 
 # PageInspector Architecture
