@@ -263,3 +263,40 @@ export const SERVICES_CATALOG: Record<ProductId, ProductDetails> = {
   }
 };
 
+// --- SCHEDULED MONITORS ---
+export const scheduledMonitorSchemaDTO = z.object({
+    id: z.number(),
+    userId: z.number(),
+    url: z.string(),
+    interval: z.string(),
+    productIds: z.array(z.string()),
+    active: z.boolean(),
+    nextRunAt: z.string(),
+});
+
+export const createMonitorBodySchema = z.object({
+    url: z.string().url({ message: "Неверный формат URL" }),
+    interval: z.enum(["daily", "weekly"]),
+    productIds: z.array(z.string())
+});
+
+export const updateMonitorBodySchema = z.object({
+    active: z.boolean().optional(),
+    interval: z.enum(["daily", "weekly"]).optional(),
+    productIds: z.array(z.string()).optional()
+});
+
+export type ScheduledMonitorDTO = z.infer<typeof scheduledMonitorSchemaDTO>;
+export type CreateMonitorBody = z.infer<typeof createMonitorBodySchema>;
+export type UpdateMonitorBody = z.infer<typeof updateMonitorBodySchema>;
+
+// --- NOTIFICATIONS ---
+export const notificationSchemaDTO = z.object({
+    id: z.number(),
+    userId: z.number(),
+    message: z.string(),
+    sent: z.boolean(),
+    createdAt: z.string(),
+});
+
+export type NotificationDTO = z.infer<typeof notificationSchemaDTO>;
