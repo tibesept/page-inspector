@@ -133,13 +133,13 @@ export const lighthouseResultSchema = z.object({
     premiumInsights: lighthousePremiumInsightsSchema,
 });
 export const seoResultSchema = z.object({
-        title: z.string().nullable(),
-        description: z.string().nullable(),
-        h1: z.string().nullable(),
-        linksCount: z.number().nullable(),
-        internalLinks: z.number().nullable(),
-        externalLinks: z.number().nullable(),
-        brokenLinks: z.array(
+    title: z.string().nullable(),
+    description: z.string().nullable(),
+    h1: z.string().nullable(),
+    linksCount: z.number().nullable(),
+    internalLinks: z.number().nullable(),
+    externalLinks: z.number().nullable(),
+    brokenLinks: z.array(
         z.object({
             url: z.string(),
             status: z.number(),
@@ -178,3 +178,28 @@ export type JobAnalyzerSettingsDB = z.infer<typeof jobAnalyzerSettings>;
 export type JobReadySummary = z.infer<typeof jobReadySummary>;
 
 export const LIGHTHOUSE_PRO_COST = 10;
+export const TELEGRAM_STARS_RATE = 1;
+
+// BODY VALIDATION FOR PAYMENTS
+export const createPaymentIntentBodySchema = z.object({
+    userId: z.number(),
+    amountCredits: z.number().positive(),
+    amountStars: z.number().positive(),
+});
+
+export const confirmPaymentBodySchema = z.object({
+    paymentId: z.string().uuid(),
+    telegramChargeId: z.string(),
+});
+
+export const paymentIntentSchemaDTO = z.object({
+    id: z.string(),
+    userId: z.number(),
+    amountCredits: z.number(),
+    amountStars: z.number(),
+    status: z.string(),
+});
+
+export type CreatePaymentIntentBody = z.infer<typeof createPaymentIntentBodySchema>;
+export type ConfirmPaymentBody = z.infer<typeof confirmPaymentBodySchema>;
+export type PaymentIntentDTO = z.infer<typeof paymentIntentSchemaDTO>;

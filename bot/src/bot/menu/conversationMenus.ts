@@ -83,7 +83,7 @@ export function createMainMenu(
     settingsBuffer: IAnalyzerSettings
 ) {
     const main = conversation.menu("root-menu")
-        .text("Запуск!", async (ctx) => {
+        .text("🚀 Запуск!", async (ctx) => {
             await ctx.deleteMessage();
             const progressMsg = await ctx.reply("⏳ <b>Ожидайте...</b>", { parse_mode: "HTML" });
 
@@ -170,11 +170,24 @@ export function createMainMenu(
 
     const settings = createSettingsMenu(conversation, settingsBuffer, main);
 
-    main.submenu("Настройки", settings);
-    main.row().text("Отмена", async (ctx) => {
+    main.submenu("✏️ Изменить", settings);
+    main.row().text("❌Отмена", async (ctx) => {
         await ctx.deleteMessage();
         await ctx.reply("Операция отменена!");
         conversation.halt()
     })
     return main;
+}
+
+// ----- BUY CREDITS MENU -----
+export function createBuyCreditsMenu(
+    conversation: Conversation<Context, TMyContext>
+) {
+    const menu = conversation.menu("buy-credits-menu")
+        .text("❌ Отмена", async (ctx) => {
+            await ctx.deleteMessage();
+            await ctx.reply("Операция отменена!");
+            conversation.halt();
+        });
+    return menu;
 }

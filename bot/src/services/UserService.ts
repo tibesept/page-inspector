@@ -22,4 +22,21 @@ export class UserService {
         }
     }
 
+    public async createPaymentIntent(userId: number, amountCredits: number, amountStars: number) {
+        try {
+            return await this.userRepository.createPaymentIntent(userId, amountCredits, amountStars);
+        } catch (error) {
+            logger.error(error, "Failed to create payment intent");
+            throw error;
+        }
+    }
+
+    public async confirmPayment(paymentId: string, telegramChargeId: string) {
+        try {
+            return await this.userRepository.confirmPayment(paymentId, telegramChargeId);
+        } catch (error) {
+            logger.error(error, "Failed to confirm payment");
+            throw error;
+        }
+    }
 }

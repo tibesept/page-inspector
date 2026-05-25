@@ -17,7 +17,7 @@ router.get("/:id", async (req: Request, res: Response<UserDTO>) => {
     const user = await UserService.getUserAndCreateIfNotExists(userId);
     const dto: UserDTO = {
         userId: Number(user.userId),
-        balance: user.balance
+        balance: typeof user.balance === "number" ? user.balance : Number(user.balance)
     } 
 
     res.json(dto);
