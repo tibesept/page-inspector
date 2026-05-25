@@ -1,7 +1,7 @@
 export enum EConversations {
-    newJob = "newJob",
     buyCredits = "buyCredits",
+    checkoutCart = "checkoutCart",
 }
 
-export * from "./newJob.js";
 export * from "./buyCredits.js";
+export * from "./checkoutCart.js";

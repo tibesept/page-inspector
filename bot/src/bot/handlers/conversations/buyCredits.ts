@@ -2,8 +2,19 @@ import { Conversation } from "@grammyjs/conversations";
 import { logger } from "#core/logger.js";
 import { TMyContext } from "#types/state.js";
 import { Context } from "grammy";
-import { createBuyCreditsMenu } from "#bot/menu/conversationMenus.js";
 import { TELEGRAM_STARS_RATE } from "@page-inspector/shared";
+
+export function createBuyCreditsMenu(
+    conversation: Conversation<Context, TMyContext>
+) {
+    const menu = conversation.menu("buy-credits-menu")
+        .text("❌ Отмена", async (ctx) => {
+            await ctx.deleteMessage();
+            await ctx.reply("Операция отменена!");
+            conversation.halt();
+        });
+    return menu;
+}
 
 export async function buyCredits(
     conversation: Conversation<Context, TMyContext>,
