@@ -5,7 +5,6 @@ import { logger } from "#core/logger.js";
 import { Sticker } from "grammy/types";
 
 export interface IJobsRepository {
-    createJob(data: CreateJobParams): Promise<Job>; 
     findReady(): Promise<Ready>;
     findById(id: number): Promise<Job | null>;
     updateStatus(id: number, status: JobStatus): Promise<void>; // Обновляет статус задачи
@@ -14,15 +13,6 @@ export interface IJobsRepository {
 export class JobsRepository implements IJobsRepository {
     constructor(private readonly apiService: ApiService) {}
 
-    public async createJob(data: CreateJobParams): Promise<Job> {
-        const dto = await this.apiService.createJob({
-            userId: data.userId,
-            url: data.url,
-            type: data.type,
-            settings: data.settings
-        });
-        return this.mapPostDtoToModel(dto);
-    }
 
     public async findReady(): Promise<Ready> {
         const ready = await this.apiService.getJobsDone()
@@ -81,6 +71,7 @@ export class JobsRepository implements IJobsRepository {
             })(),
             ai_summary: dto.ai_summary || null,
             settings: {
+                depth: dto.settings.depth,
                 ai_summary: dto.settings.ai_summary,
                 techstack: dto.settings.techstack,
                 links: dto.settings.links,
@@ -88,22 +79,6 @@ export class JobsRepository implements IJobsRepository {
                 lighthouse: dto.settings.lighthouse,
                 lighthouse_pro: dto.settings.lighthouse_pro
             }
-        };
-    }
-
-    private mapPostDtoToModel(dto: CreateJobDTO): Job {
-        if (!dto) throw new Error("Cannot map null DTO to model");
-
-        return {
-            jobId: dto.jobId,
-            userId: dto.userId,
-            url: null,
-            // Приводим строку к нашему строгому типу
-            status: dto.status as JobStatus,
-            // Парсим JSON-строку. Если она пустая или некорректная, возвращаем null.
-            result: null,
-            ai_summary: null,
-            settings: null
         };
     }
 }

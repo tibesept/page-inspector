@@ -1,8 +1,6 @@
 import { ApiHttpClient } from "#api/HttpClient.js";
 import { z } from "zod";
 import {
-    CreateJobBody,
-    createJobBodySchema,
     CreateJobDTO,
     JobDTO,
     jobSchemaDTO,
@@ -19,7 +17,13 @@ import {
     confirmPaymentBodySchema,
     PaymentIntentDTO,
     paymentIntentSchemaDTO,
+    cartSchemaDTO,
+    CartDTO,
+    ProductId,
+    checkoutResponseSchemaDTO,
+    CheckoutResponseDTO,
 } from "#api/types.js";
+
 
 
 /**
@@ -39,10 +43,6 @@ export class ApiService {
         return this.client.get(`/jobs/${id}`, jobSchemaDTO);
     }
 
-    public createJob(body: CreateJobBody): Promise<CreateJobDTO> {
-        createJobBodySchema.parse(body); // валидация body
-        return this.client.post("/jobs", body, postJobSchemaDTO);
-    }
 
     public updateJobStatus(id: number, status: string): Promise<CreateJobDTO> {
         const body: UpdateJobStatusBody = updateJobStatusBodySchema.parse({
@@ -70,5 +70,22 @@ export class ApiService {
             alreadyProcessed: z.boolean(),
         });
         return this.client.post("/payments/confirm", body, confirmPaymentResponseSchema);
+    }
+
+    // CART
+    public getCart(userId: number | bigint): Promise<CartDTO> {
+        return this.client.get(`/cart/${userId}`, cartSchemaDTO);
+    }
+
+    public addToCart(userId: number | bigint, productId: ProductId): Promise<any> {
+        return this.client.post(`/cart/${userId}/add`, { productId }, z.any());
+    }
+
+    public removeFromCart(userId: number | bigint, productId: ProductId): Promise<any> {
+        return this.client.delete(`/cart/${userId}/remove/${productId}`, z.any());
+    }
+
+    public checkoutCart(userId: number | bigint, url: string): Promise<CheckoutResponseDTO> {
+        return this.client.post(`/cart/${userId}/checkout`, { url }, checkoutResponseSchemaDTO);
     }
 }

@@ -1,5 +1,6 @@
 import { logger } from "#core/logger.js";
 import { IUsersRepository } from "#repositories/UsersRepository.js";
+import { CartDTO, ProductId, CheckoutResponseDTO } from "#api/types.js";
 
 /**
  * Операции с юзерами (на уровне бизнес-логики)
@@ -39,4 +40,41 @@ export class UserService {
             throw error;
         }
     }
+
+    public async getCart(userId: number): Promise<CartDTO> {
+        try {
+            return await this.userRepository.getCart(userId);
+        } catch (error) {
+            logger.error(error, "Failed to get cart");
+            throw error;
+        }
+    }
+
+    public async addToCart(userId: number, productId: ProductId) {
+        try {
+            return await this.userRepository.addToCart(userId, productId);
+        } catch (error) {
+            logger.error(error, "Failed to add to cart");
+            throw error;
+        }
+    }
+
+    public async removeFromCart(userId: number, productId: ProductId) {
+        try {
+            return await this.userRepository.removeFromCart(userId, productId);
+        } catch (error) {
+            logger.error(error, "Failed to remove from cart");
+            throw error;
+        }
+    }
+
+    public async checkoutCart(userId: number, url: string): Promise<CheckoutResponseDTO> {
+        try {
+            return await this.userRepository.checkoutCart(userId, url);
+        } catch (error) {
+            logger.error(error, "Failed to checkout cart");
+            throw error;
+        }
+    }
 }
+

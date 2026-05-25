@@ -1,6 +1,6 @@
 import { Bot, InputFile } from "grammy";
 import { z } from "zod";
-import { IAnalyzerSettings, TMyContext } from "#types/state.js";
+import { TMyContext } from "#types/state.js";
 import { logger } from "#core/logger.js";
 import { IJobsRepository } from "#repositories/JobsRepository.js";
 import { AiSummary, Job, Ready } from "#core/models/Job.js";
@@ -10,7 +10,6 @@ import {
     jobWorkerResultSchema,
     JobWorkerSeoResult,
 } from "#api/types.js"; // DTO для результата
-import { defaultAnalyzerSettings } from "#bot/session.js";
 
 const sanitizeHtml = (str: string) => 
             str.replace(/&/g, '&amp;')
@@ -214,49 +213,6 @@ export class JobService {
         }
     }
 
-    public async createNewJob(data: {
-        userId: number;
-        url: string;
-        analyzerSettings: IAnalyzerSettings;
-    }): Promise<Job> {
-        logger.info(
-            `User ${data.userId} requested a new job for URL: ${data.url}`,
-        );
-
-        // TODO:
-        // - Типы задач, глубина
-        // - Проверка, есть ли у пользователя баланс
-        // - Проверка, не создавал ли он такую же задачу 5 минут назад
-        // - Списание денег (только после выполнения джобы. Если один из пунктов провалился - за него деньги не берем)
-
-        // Объединяем настройки по умолчанию с пользовательскими, 
-        // чтобы обойти проблему неполных сессий у старых пользователей
-        const settings = {
-            ...defaultAnalyzerSettings,
-            ...data.analyzerSettings
-        };
-
-        const jobDataForRepo = {
-            userId: data.userId,
-            url: data.url,
-            type: 1,
-            settings: {
-                depth: 1, // TODO: depth
-                seo: settings.seo,
-                lighthouse: settings.lighthouse,
-                links: settings.links,
-                // FIXME: хардкод, т.к. функция не реализована до конца (fix/disable-techstack-feature)
-                techstack: false, // settings.techstack,
-                ai_summary: settings.ai_summary,
-                lighthouse_pro: settings.lighthouse_pro
-            }
-        }
-
-        // Делегируем создание репозиторию
-        const createdJob = await this.jobsRepository.createJob(jobDataForRepo);
-
-        return createdJob;
-    }
 
     public async getJobById(id: number): Promise<Job | null> {
         return this.jobsRepository.findById(id);
