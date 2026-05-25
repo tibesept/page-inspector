@@ -41,6 +41,9 @@ const server = app.listen(config.port, () => {
     logger.info(`Listening port: ${config.port}`);
 });
 
+import { MonitorScheduler } from './cron/monitorScheduler';
+MonitorScheduler.start(60000); // Check every minute
+
 server.keepAliveTimeout = 65000; // 65 секунд
 server.headersTimeout = 66000;
 

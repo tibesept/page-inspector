@@ -19,6 +19,8 @@ model User {
   jobs Job[] // Связь: один пользователь может иметь много задач
   payments Payment[]
   cartItems CartItem[]
+  scheduledMonitors ScheduledMonitor[]
+  notifications Notification[]
 }
 
 model Payment {
@@ -65,5 +67,33 @@ model CartItem {
   productId String   // Stores ProductId as string (e.g. "SEO_MAX", "AI_SUMMARY")
   createdAt DateTime @default(now())
 
+  @@index([userId])
+}
+
+model ScheduledMonitor {
+  id          Int      @id @default(autoincrement())
+  userId      BigInt
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  url         String
+  interval    String   // "daily" or "weekly"
+  productIds  Json     // JSON array of ProductIds from `@page-inspector/shared` (e.g. ["SEO_BASIC", "LIGHTHOUSE_BASIC"])
+  active      Boolean  @default(true)
+  nextRunAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([nextRunAt, active])
+  @@index([userId])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      BigInt
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  message     String
+  sent        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([sent])
   @@index([userId])
 }
