@@ -42,8 +42,8 @@ endif
 up: ## Start services (ENV=dev|prod, srv=<name> to target one)
 	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) up --build -d $(srv)
 
-down: ## Stop & remove containers, networks, and volumes
-	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) down -v
+down: ## Stop & remove containers and networks (persists volumes)
+	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) down
 
 stop: ## Stop containers without removing them
 	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) stop $(srv)
