@@ -66,7 +66,6 @@ shell: ## Open a shell in a running service (srv=api|bot|worker)
 clean: down ## Full cleanup: remove containers, images, orphans
 	docker compose $(COMPOSE_FLAGS) $(COMPOSE_FILES) down --rmi all --remove-orphans -v
 
-# --- Local TypeScript ---
 
 # --- Database / Prisma ---
 
@@ -79,6 +78,8 @@ db-deploy: ## Apply pending migrations using deploy command
 
 db-reset: ## Reset the local development database and apply all migrations (destructive)
 	docker compose exec api npx prisma migrate reset --force
+
+# --- Local TypeScript ---
 
 ts: ## Compile all TypeScript locally (no Docker)
 	npm run build
