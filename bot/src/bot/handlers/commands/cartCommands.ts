@@ -50,7 +50,9 @@ async function sendOrEditCart(ctx: TMyContext, edit: boolean = false) {
                 keyboard.row().text("💳 Пополнить баланс", "buy_credits");
             }
 
-            keyboard.row().text("📂 Добавить еще услуги", "cart_catalog");
+            keyboard.row()
+                .text("📂 Добавить еще услуги", "cart_catalog")
+                .text("⏱️ Авто-проверка", "monitor_create");
         }
 
         if (edit) {

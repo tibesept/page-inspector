@@ -12,8 +12,9 @@ import { errorHandler } from "#bot/handlers/error/index.js";
 // commands
 import { basicCommands } from "#bot/handlers/commands/basicCommands.js";
 import { cartCommands } from "#bot/handlers/commands/cartCommands.js";
+import { monitorCommands } from "#bot/handlers/commands/monitorCommands.js";
 // conversations
-import { buyCredits, checkoutCart } from "#bot/handlers/conversations/index.js";
+import { buyCredits, checkoutCart, createMonitor } from "#bot/handlers/conversations/index.js";
 
 // ===== API ===== (используем только как типы)
 // repositories
@@ -21,6 +22,7 @@ import { UsersRepository } from "#repositories/UsersRepository.js";
 // services
 import { JobService } from "#services/JobService.js";
 import { UserService } from "#services/UserService.js";
+import { MonitorService } from "#services/MonitorService.js";
 import { createInjectServices } from "./middlewares/injectServices.js";
 
 
@@ -29,6 +31,7 @@ export function configureBot(
     usersRepository: UsersRepository,
     userService: UserService,
     jobService: JobService,
+    monitorService: MonitorService,
 ): void {
     // SESSION
     bot.use(
@@ -40,7 +43,7 @@ export function configureBot(
             }),
         }),
     );
-    const injectServices = createInjectServices(jobService, userService);
+    const injectServices = createInjectServices(jobService, userService, monitorService);
 
     // MIDDLEWARES
     bot.use(loggerMiddleware);
@@ -54,6 +57,7 @@ export function configureBot(
     bot.use(conversations());
     bot.use(createConversation(buyCredits, { plugins: [injectServices]}));
     bot.use(createConversation(checkoutCart, { plugins: [injectServices]}));
+    bot.use(createConversation(createMonitor, { plugins: [injectServices]}));
 
     // PRE_CHECKOUT_QUERY HANDLER
     bot.on("pre_checkout_query", async (ctx) => {
@@ -130,6 +134,7 @@ export function configureBot(
     // HANDLERS
     bot.use(basicCommands);
     bot.use(cartCommands);
+    bot.use(monitorCommands);
 
     // ERROR HANDLER
     bot.catch(errorHandler);
